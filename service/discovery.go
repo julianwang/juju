@@ -111,7 +111,7 @@ func discoverLocalInitSystem() (string, error) {
 	for _, check := range discoveryFuncs {
 		local, err := check.isRunning()
 		if err != nil {
-			logger.Errorf("failed to find init system %q: %v", check.name, err)
+			logger.Debugf("failed to find init system %q: %v", check.name, err)
 		}
 		// We expect that in error cases "local" will be false.
 		if local {
@@ -124,10 +124,10 @@ func discoverLocalInitSystem() (string, error) {
 
 const discoverInitSystemScript = `
 # Use guaranteed discovery mechanisms for known init systems.
-if [[ -d /run/systemd/system ]]; then
+if [ -d /run/systemd/system ]; then
     echo -n systemd
     exit 0
-elif [[ -f /sbin/initctl ]] && /sbin/initctl --system list 2>&1 > /dev/null; then
+elif [ -f /sbin/initctl ] && /sbin/initctl --system list 2>&1 > /dev/null; then
     echo -n upstart
     exit 0
 fi

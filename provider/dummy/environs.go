@@ -637,7 +637,7 @@ func (e *environ) checkBroken(method string) error {
 
 // SupportedArchitectures is specified on the EnvironCapability interface.
 func (*environ) SupportedArchitectures() ([]string, error) {
-	return []string{arch.AMD64, arch.I386, arch.PPC64EL}, nil
+	return []string{arch.AMD64, arch.I386, arch.PPC64EL, arch.ARM64}, nil
 }
 
 // PrecheckInstance is specified in the state.Prechecker interface.
@@ -829,6 +829,11 @@ func (e *environ) ConstraintsValidator() (constraints.Validator, error) {
 	validator.RegisterUnsupported([]string{constraints.CpuPower})
 	validator.RegisterConflicts([]string{constraints.InstanceType}, []string{constraints.Mem})
 	return validator, nil
+}
+
+// MaintainInstance is specified in the InstanceBroker interface.
+func (*environ) MaintainInstance(args environs.StartInstanceParams) error {
+	return nil
 }
 
 // StartInstance is specified in the InstanceBroker interface.

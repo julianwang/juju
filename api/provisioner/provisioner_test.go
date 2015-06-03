@@ -74,7 +74,7 @@ func (s *provisionerSuite) SetUpTest(c *gc.C) {
 	c.Assert(err, jc.ErrorIsNil)
 	s.st = s.OpenAPIAsMachine(c, s.machine.Tag(), password, "fake_nonce")
 	c.Assert(s.st, gc.NotNil)
-	err = s.machine.SetAddresses(network.NewAddress("0.1.2.3"))
+	err = s.machine.SetProviderAddresses(network.NewAddress("0.1.2.3"))
 	c.Assert(err, jc.ErrorIsNil)
 
 	// Create the provisioner API facade.
@@ -600,7 +600,7 @@ func (s *provisionerSuite) TestWatchEnvironMachines(c *gc.C) {
 }
 
 func (s *provisionerSuite) TestStateAddresses(c *gc.C) {
-	err := s.machine.SetAddresses(network.NewAddress("0.1.2.3"))
+	err := s.machine.SetProviderAddresses(network.NewAddress("0.1.2.3"))
 	c.Assert(err, jc.ErrorIsNil)
 
 	stateAddresses, err := s.State.Addresses()
@@ -702,6 +702,30 @@ func (s *provisionerSuite) TestContainerManagerConfigPermissive(c *gc.C) {
 		// allocation by default, so IP forwarding should be enabled.
 		container.ConfigIPForwarding: "true",
 	})
+}
+
+func (s *provisionerSuite) TestContainerManagerConfigLXCDefaultMTU(c *gc.C) {
+	var resultConfig = map[string]string{
+		"lxc-default-mtu": "9000",
+	}
+	var called bool
+	provisioner.PatchFacadeCall(s, s.provisioner, func(request string, args, response interface{}) error {
+		called = true
+		c.Assert(request, gc.Equals, "ContainerManagerConfig")
+		expected := params.ContainerManagerConfigParams{
+			Type: instance.LXC,
+		}
+		c.Assert(args, gc.Equals, expected)
+		result := response.(*params.ContainerManagerConfig)
+		result.ManagerConfig = resultConfig
+		return nil
+	})
+
+	args := params.ContainerManagerConfigParams{Type: instance.LXC}
+	result, err := s.provisioner.ContainerManagerConfig(args)
+	c.Assert(called, jc.IsTrue)
+	c.Assert(err, jc.ErrorIsNil)
+	c.Assert(result.ManagerConfig, jc.DeepEquals, resultConfig)
 }
 
 func (s *provisionerSuite) TestContainerConfig(c *gc.C) {
